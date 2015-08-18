@@ -7,6 +7,7 @@ Flask + Metro UI app template
 	
 	## virtualenv
 
+	yum -y install gcc python-devel
 	cd /opt/$PROG
 	virtualenv venv/
 	. venv/bin/activate
