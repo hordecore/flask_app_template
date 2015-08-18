@@ -4,6 +4,7 @@
 
 . /etc/rc.d/init.d/functions
 
+#TODO: move CHDIR, LOGFILE, VENV, PIDFILE to uwsgi.ini
 ALREADY_RUN=111
 RETVAL=1
 PROG="__PROG__"
