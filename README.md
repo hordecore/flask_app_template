@@ -5,7 +5,7 @@ Flask + Metro UI app template
 	PROG=название_программы
 	git clone git@github.com:hordecore/flask_app_template.git /opt/$PROG
 	
-## virtualenv
+	## virtualenv
 
 	cd /opt/$PROG
 	virtualenv venv/
@@ -13,7 +13,7 @@ Flask + Metro UI app template
 	pip install -r requirements.txt
 	deactivate
 	
-## init
+	## init
 
 	sed -e "s/__PROG__/$PROG/g" contrib/init-script > /etc/rc.d/init.d/$PROG
 	chmod a+x /etc/rc.d/init.d/$PROG
@@ -44,4 +44,6 @@ Config example:
 		}
 	}
 
-Don't forget about service nginx restart
+Don't forget about:
+
+	service nginx restart
