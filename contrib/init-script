@@ -1,0 +1,93 @@
+#!/bin/bash
+# chkconfig: - 81 15
+# description: Main worker
+
+. /etc/rc.d/init.d/functions
+
+ALREADY_RUN=111
+RETVAL=1
+PROG="__PROG__"
+prog="$prog"
+LOCKFILE="/var/lock/subsys/$PROG"
+PIDFILE=/var/run/$PROG.pid 
+VENV=/opt/$PROG/venv
+CHDIR=/opt/$PROG/
+LOGFILE=/var/log/$PROG.log
+
+start() {
+	echo -n $"Starting $prog: "
+	setsebool httpd_can_network_connect 1 || true
+	setenforce 0
+	[ -s $PIDFILE ] && echo "$PROG already started with pid $(<$PIDFILE)" && return 0
+	. $VENV/bin/activate
+	uwsgi -s 127.0.0.1:8085 --chdir=$CHDIR --pidfile=$PIDFILE --daemonize2=$LOGFILE --protocol=http -w WSGI:app
+	RETVAL=$?
+	pid=$!
+	if [ "$RETVAL" = '0' ]; then
+		echo $pid > $PIDFILE
+	 	touch $LOCKFILE
+	fi
+	[ "$RETVAL" != "0" ] && rm -f $LOCKFILE $PIDFILE
+	deactivate
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog: "
+	# killproc $PROG # 2>/dev/null
+	. $VENV/bin/activate
+	[ -s $PIDFILE ] && uwsgi --stop $PIDFILE
+	local stoptime=1
+	while [ -s "$PIDFILE" ] && [ -d /proc/$(<$PIDFILE) ]; do
+		sleep 0.5
+	done
+	RETVAL=$?
+	rm -f $LOCKFILE $PIDFILE
+	deactivate
+	return $RETVAL
+}
+
+echo_result() {
+	if [ "$1" = '0' ]; then
+		echo_success
+	else
+		echo_failure
+	fi
+	echo
+	return $1
+}
+
+# See how we were called.
+case "$1" in
+	start)
+		start
+		RETVAL=$?
+		echo_result $RETVAL
+		;;
+	stop)
+		stop
+		RETVAL=$?
+		echo_result $RETVAL
+		;;
+	restart)
+		stop
+		RETVAL=$?
+		echo_result $RETVAL
+		start
+		RETVAL=$?
+		echo_result $RETVAL
+		;;
+	condrestart)
+		[ -e "$LOCKFILE" ] && restart
+		RETVAL=$?
+		;;
+	status)
+		status -p /var/run/$PROG.pid
+		RETVAL=$?
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+		exit 1
+		;;
+esac
+exit $RETVAL
